@@ -4,12 +4,18 @@ import fs from 'fs';
 import path from 'path';
 import invariant from 'tiny-invariant';
 
-const DEFAULT_CONFIG_FILES = ['figui.config.js', 'figui.config.mjs'];
+import { runMe } from './generator';
 
+const POSSIBLE_CONFIG_FILES = ['figui.config.js', 'figui.config.mjs'];
+
+// TODO: allow users to pass in through arg
+const POSSIBLE_LIBRARY_LOCATIONS = ['ui', 'src/ui'];
+
+// TODO: refactor following two functions into a single function
 function findConfigPath() {
     let resolvedPath: string | undefined;
 
-    for (const filename of DEFAULT_CONFIG_FILES) {
+    for (const filename of POSSIBLE_CONFIG_FILES) {
         const filePath = path.resolve(process.cwd(), filename);
 
         if (!fs.existsSync(filePath)) {
@@ -25,6 +31,28 @@ function findConfigPath() {
     }
 
     return resolvedPath;
+}
+
+function getComponentLibraryLocation() {
+    let foundLocation: string | undefined;
+    for (const location of POSSIBLE_LIBRARY_LOCATIONS) {
+        const filePath = path.resolve(process.cwd(), location);
+
+        console.log(filePath);
+
+        if (!fs.existsSync(filePath)) {
+            continue;
+        }
+
+        foundLocation = filePath;
+        break;
+    }
+
+    if (!foundLocation) {
+        invariant(!!foundLocation, 'Unable to find a known location for the component library.');
+    }
+
+    return foundLocation;
 }
 
 interface Config {
@@ -59,6 +87,29 @@ async function loadConfig() {
         assertIsConfig(config),
         'Make sure your config file includes the required properties'
     );
+
+    return config;
 }
 
-loadConfig();
+async function getDataFromFigma(config: Config) {}
+function generateComponents(componentData: any) {}
+function generateFiles(components: any) {}
+
+async function run() {
+    const { file, key } = await loadConfig();
+    const libraryLocation = getComponentLibraryLocation();
+
+    // [ButtonInstance, CardInstance, etc.]
+    const componentData = await getDataFromFigma({
+        file,
+        key,
+    });
+
+    runMe(libraryLocation);
+
+    const components = generateComponents(componentData);
+
+    generateFiles(components);
+}
+
+run();
